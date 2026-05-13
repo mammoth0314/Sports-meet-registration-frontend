@@ -295,6 +295,7 @@ select[name="college"]:valid {
     display: grid;
     grid-template-columns: 220px 1fr;
     gap: 18px;
+    align-items: start;
 }
 
 .sidebar {
@@ -302,6 +303,8 @@ select[name="college"]:valid {
     display: grid;
     gap: 10px;
     align-content: start;
+    min-height: 720px;
+    background: linear-gradient(180deg, #23364d 0%, #32465f 100%);
 }
 
 .nav-item {
@@ -310,19 +313,31 @@ select[name="college"]:valid {
     padding: 16px 18px;
     border-radius: 18px;
     background: transparent;
-    color: var(--text);
+    color: rgba(255, 255, 255, 0.86);
     font-weight: 700;
+    border: 1px solid transparent;
 }
 
-.nav-item.active,
-.tab-item.active {
-    background: linear-gradient(135deg, rgba(15, 118, 110, 0.14), rgba(20, 184, 166, 0.24));
-    color: #115e59;
+.nav-item.active {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.16);
+}
+
+.nav-item:hover {
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .content-area {
     display: grid;
     gap: 18px;
+    align-content: start;
+    align-items: start;
+}
+
+.content-card {
+    align-self: start;
+    height: auto;
 }
 
 .content-header,
@@ -342,7 +357,15 @@ select[name="college"]:valid {
     padding: 12px 18px;
     border-radius: 14px;
     background: rgba(255, 255, 255, 0.72);
+    color: var(--text);
     font-weight: 700;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.tab-item.active {
+    background: linear-gradient(135deg, rgba(15, 118, 110, 0.14), rgba(20, 184, 166, 0.24));
+    color: #115e59;
+    border-color: rgba(15, 118, 110, 0.18);
 }
 
 .profile-grid,
@@ -355,6 +378,7 @@ select[name="college"]:valid {
 .summary-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     margin-bottom: 22px;
+    align-items: start;
 }
 
 .info-card,
@@ -363,6 +387,8 @@ select[name="college"]:valid {
     border-radius: 20px;
     background: rgba(248, 250, 252, 0.96);
     border: 1px solid rgba(226, 232, 240, 0.9);
+    height: auto;
+    align-self: start;
 }
 
 .summary-card strong,

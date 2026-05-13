@@ -25,6 +25,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 phone: String(formData.get('phone') || '').trim(),
                 gender: String(formData.get('gender') || ''),
                 college: String(formData.get('college') || '').trim(),
+                className: String(formData.get('className') || '').trim(),
+                studentNo: String(formData.get('studentNo') || '').trim(),
                 category: String(formData.get('category') || '')
             },
             success: function (response) {

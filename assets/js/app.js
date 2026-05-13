@@ -1,30 +1,39 @@
-document.addEventListener('DOMContentLoaded', function () {
+﻿document.addEventListener('DOMContentLoaded', function () {
     var currentUserName = document.getElementById('currentUserName');
     var logoutBtn = document.getElementById('logoutBtn');
-    var navItems = document.querySelectorAll('.nav-item');
+    var sidebarNav = document.getElementById('sidebarNav');
     var sectionTitle = document.getElementById('sectionTitle');
     var sectionDesc = document.getElementById('sectionDesc');
     var subTabs = document.getElementById('subTabs');
-    var profileView = document.getElementById('profileView');
-    var eventsView = document.getElementById('eventsView');
-    var adminView = document.getElementById('adminView');
-    var registrationsView = document.getElementById('registrationsView');
-    var adminNavBtn = document.getElementById('adminNavBtn');
-    var registrationsNavBtn = document.getElementById('registrationsNavBtn');
+    var mainView = document.getElementById('mainView');
 
     var state = {
-        currentView: 'profile',
-        currentTab: 'all',
         user: null,
+        currentView: '',
+        currentTab: 'all',
         events: [],
         myEvents: [],
         adminUsers: [],
         adminRegistrations: [],
-        eventPage: 1,
-        myEventPage: 1,
-        registrationsPage: 1,
-        pageSize: 7
+        adminEvents: [],
+        editingEventId: null
     };
+
+    var studentMenus = [
+        { key: 'profile', label: '涓汉淇℃伅', desc: '鏌ョ湅骞剁淮鎶ゅ綋鍓嶇櫥褰曚汉鍛樼殑鍩虹璧勬枡銆? },
+        { key: 'events', label: '杩愬姩浼氭姤鍚?, desc: '娴忚鎵€鏈夐」鐩苟瀹屾垚鎶ュ悕锛屼篃鍙互鏌ョ湅鑷繁鐨勬姤鍚嶄俊鎭€? }
+    ];
+
+    var adminMenus = [
+        { key: 'admin-home', label: '杩愬姩浼氱鐞?, desc: '鏌ョ湅鍚庡彴棣栭〉鍜岀郴缁熸瑙堛€? },
+        { key: 'team-info', label: '鍥綋淇℃伅绠＄悊', desc: '缁存姢鍙傝禌鍥綋涓庣粍缁囦俊鎭€? },
+        { key: 'user-manage', label: '鐢ㄦ埛淇℃伅绠＄悊', desc: '鏌ョ湅銆佺淮鎶ょ敤鎴疯祫鏂欏苟鎵ц璐﹀彿绠＄悊鎿嶄綔銆? },
+        { key: 'event-manage', label: '椤圭洰绠＄悊', desc: '缁存姢璧涗簨椤圭洰銆佸垎绫汇€佺粍鍒拰鎶ュ悕鍙傛暟銆? },
+        { key: 'athlete-manage', label: '鍙傝禌杩愬姩鍛樼鐞?, desc: '鏌ョ湅鎵€鏈夊凡鎶ュ悕杩愬姩鍛樺拰鍙傝禌鍚嶅崟銆? },
+        { key: 'score-manage', label: '鍙傝禌鎴愮哗绠＄悊', desc: '褰曞叆銆佹煡鐪嬪拰缁存姢姣旇禌鎴愮哗銆? },
+        { key: 'record-manage', label: '椤圭洰璁板綍绠＄悊', desc: '绠＄悊椤圭洰璁板綍銆佺З搴忓唽鍜岃禌浜嬭褰曘€? },
+        { key: 'system-manage', label: '绯荤粺绠＄悊', desc: '缁存姢绯荤粺鍩虹閰嶇疆鍜屽悗鍙拌繍琛屼俊鎭€? }
+    ];
 
     function escapeHtml(value) {
         return String(value == null ? '' : value)
@@ -35,76 +44,35 @@ document.addEventListener('DOMContentLoaded', function () {
             .replace(/'/g, '&#39;');
     }
 
-    function buildOptions(list, current) {
-        return list.map(function (item) {
-            return '<option value="' + item + '"' + (item === current ? ' selected' : '') + '>' + item + '</option>';
+    function getMenus() {
+        return state.user && state.user.role === 'ADMIN' ? adminMenus : studentMenus;
+    }
+
+    function renderSidebar() {
+        var menus = getMenus();
+        sidebarNav.innerHTML = menus.map(function (item, index) {
+            return '<button class="nav-item ' + (item.key === state.currentView ? 'active' : '') + '" data-view="' + item.key + '">' + item.label + '</button>';
         }).join('');
-    }
 
-    function buildCollegeOptions(current) {
-        var colleges = [
-            '文学与文化传播学院',
-            '马克思主义学院',
-            '教育学院',
-            '外国语学院',
-            '历史文化学院',
-            '商学院',
-            '化学工程与技术学院',
-            '电子信息与电气工程学院',
-            '数学与统计学院',
-            '生物工程与技术学院',
-            '机电工程学院',
-            '土木工程学院',
-            '资源与环境工程学院',
-            '体育学院',
-            '美术与设计学院',
-            '音乐舞蹈学院',
-            '卫生健康学院',
-            '继续教育学院（培训中心）'
-        ];
-        return '<option value="">请选择学院</option>' + colleges.map(function (item) {
-            return '<option value="' + item + '"' + (item === current ? ' selected' : '') + '>' + item + '</option>';
-        }).join('');
-    }
-
-    function getPaginatedList(list, page) {
-        var start = (page - 1) * state.pageSize;
-        var end = start + state.pageSize;
-        return list.slice(start, end);
-    }
-
-    function getTotalPages(list) {
-        return Math.ceil(list.length / state.pageSize);
-    }
-
-    function renderPagination(totalPages, currentPage, type) {
-        if (totalPages <= 1) {
-            return '';
-        }
-        var html = '<div class="pagination">';
-        html += '<button class="page-btn" data-page="prev" ' + (currentPage <= 1 ? 'disabled' : '') + '>上一页</button>';
-        for (var i = 1; i <= totalPages; i++) {
-            html += '<button class="page-btn ' + (i === currentPage ? 'active' : '') + '" data-page="' + i + '">' + i + '</button>';
-        }
-        html += '<button class="page-btn" data-page="next" ' + (currentPage >= totalPages ? 'disabled' : '') + '>下一页</button>';
-        html += '</div>';
-        return html;
+        Array.prototype.slice.call(sidebarNav.querySelectorAll('.nav-item')).forEach(function (button) {
+            button.addEventListener('click', function () {
+                switchView(button.getAttribute('data-view'));
+            });
+        });
     }
 
     function renderTabs() {
         var html = '';
         if (state.currentView === 'events') {
             html = ''
-                + '<button class="tab-item ' + (state.currentTab === 'all' ? 'active' : '') + '" data-tab="all">报名</button>'
-                + '<button class="tab-item ' + (state.currentTab === 'mine' ? 'active' : '') + '" data-tab="mine">报名信息</button>';
-        } else if (state.currentView === 'admin') {
-            html = '<button class="tab-item active" data-tab="users">用户信息</button>';
+                + '<button class="tab-item ' + (state.currentTab === 'all' ? 'active' : '') + '" data-tab="all">鎶ュ悕</button>'
+                + '<button class="tab-item ' + (state.currentTab === 'mine' ? 'active' : '') + '" data-tab="mine">鎶ュ悕淇℃伅</button>';
         }
         subTabs.innerHTML = html;
         subTabs.classList.toggle('hidden', !html);
-        Array.prototype.slice.call(subTabs.querySelectorAll('.tab-item')).forEach(function (item) {
-            item.addEventListener('click', function () {
-                state.currentTab = item.getAttribute('data-tab');
+        Array.prototype.slice.call(subTabs.querySelectorAll('.tab-item')).forEach(function (button) {
+            button.addEventListener('click', function () {
+                state.currentTab = button.getAttribute('data-tab');
                 renderTabs();
                 renderCurrentView();
             });
@@ -112,60 +80,104 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function renderProfile() {
-        if (!state.user) {
-            return;
-        }
-        profileView.innerHTML = ''
+        mainView.innerHTML = ''
             + '<div class="section-block">'
-            + '  <div class="section-head"><div><h3>基础资料</h3><p class="info-meta">支持在线更新姓名、电话、性别、学院和类别信息。</p></div></div>'
+            + '  <div class="section-head"><div><h3>鍩虹璧勬枡</h3><p class="info-meta">褰撳墠璐﹀彿鐨勪釜浜轰俊鎭涓嬨€?/p></div></div>'
             + '  <div class="profile-grid">'
-            + '    <div class="info-card"><strong>身份证号</strong><p>' + escapeHtml(state.user.idCard) + '</p></div>'
-            + '    <div class="info-card"><strong>登录账号</strong><p>' + escapeHtml(state.user.username) + '</p></div>'
-            + '    <div class="info-card"><strong>姓名</strong><p>' + escapeHtml(state.user.name) + '</p></div>'
-            + '    <div class="info-card"><strong>联系电话</strong><p>' + escapeHtml(state.user.phone) + '</p></div>'
-            + '    <div class="info-card"><strong>性别</strong><p>' + escapeHtml(state.user.gender) + '</p></div>'
-            + '    <div class="info-card"><strong>学院</strong><p>' + escapeHtml(state.user.college) + '</p></div>'
-            + '    <div class="info-card"><strong>类别</strong><p>' + escapeHtml(state.user.category) + '</p></div>'
+            + '    <div class="info-card"><strong>韬唤璇佸彿</strong><p>' + escapeHtml(state.user.idCard) + '</p></div>'
+            + '    <div class="info-card"><strong>鐧诲綍璐﹀彿</strong><p>' + escapeHtml(state.user.username) + '</p></div>'
+            + '    <div class="info-card"><strong>濮撳悕</strong><p>' + escapeHtml(state.user.name) + '</p></div>'
+            + '    <div class="info-card"><strong>鑱旂郴鐢佃瘽</strong><p>' + escapeHtml(state.user.phone) + '</p></div>'
+            + '    <div class="info-card"><strong>鎬у埆</strong><p>' + escapeHtml(state.user.gender) + '</p></div>'
+            + '    <div class="info-card"><strong>瀛﹂櫌</strong><p>' + escapeHtml(state.user.college) + '</p></div>'
+            + '    <div class="info-card"><strong>鐝骇</strong><p>' + escapeHtml(state.user.className) + '</p></div>'
+            + '    <div class="info-card"><strong>瀛﹀彿</strong><p>' + escapeHtml(state.user.studentNo) + '</p></div>'
+            + '    <div class="info-card"><strong>绫诲埆</strong><p>' + escapeHtml(state.user.category) + '</p></div>'
+            + '    <div class="info-card"><strong>瑙掕壊</strong><p>' + escapeHtml(state.user.role) + '</p></div>'
+            + '  </div>'
+            + '</div>';
+    }
+
+    function renderProfile() {
+        mainView.innerHTML = ''
+            + '<div class="section-block">'
+            + '  <div class="section-head"><div><h3>鍩虹璧勬枡</h3><p class="info-meta">褰撳墠璐﹀彿鐨勪釜浜轰俊鎭涓嬨€?/p></div></div>'
+            + '  <div class="profile-grid">'
+            + '    <div class="info-card"><strong>韬唤璇佸彿</strong><p>' + escapeHtml(state.user.idCard) + '</p></div>'
+            + '    <div class="info-card"><strong>鐧诲綍璐﹀彿</strong><p>' + escapeHtml(state.user.username) + '</p></div>'
+            + '    <div class="info-card"><strong>濮撳悕</strong><p>' + escapeHtml(state.user.name) + '</p></div>'
+            + '    <div class="info-card"><strong>鑱旂郴鐢佃瘽</strong><p>' + escapeHtml(state.user.phone) + '</p></div>'
+            + '    <div class="info-card"><strong>鎬у埆</strong><p>' + escapeHtml(state.user.gender) + '</p></div>'
+            + '    <div class="info-card"><strong>瀛﹂櫌</strong><p>' + escapeHtml(state.user.college) + '</p></div>'
+            + '    <div class="info-card"><strong>鐝骇</strong><p>' + escapeHtml(state.user.className) + '</p></div>'
+            + '    <div class="info-card"><strong>瀛﹀彿</strong><p>' + escapeHtml(state.user.studentNo) + '</p></div>'
+            + '    <div class="info-card"><strong>绫诲埆</strong><p>' + escapeHtml(state.user.category) + '</p></div>'
+            + '    <div class="info-card"><strong>瑙掕壊</strong><p>' + escapeHtml(state.user.role) + '</p></div>'
             + '  </div>'
             + '</div>'
             + '<div class="section-block">'
-            + '  <div class="section-head"><div><h3>修改信息</h3><p class="info-meta">请保持信息真实准确，方便赛事组织和通知。</p></div></div>'
+            + '  <div class="section-head"><div><h3>淇敼涓汉淇℃伅</h3><p class="info-meta">鍙互鍦ㄨ繖閲屾洿鏂板鍚嶃€佺數璇濄€佸闄€佺彮绾у拰瀛﹀彿绛変俊鎭€?/p></div></div>'
             + '  <form id="profileForm" class="form-grid two-columns">'
-            + '    <label class="field"><span>姓名</span><input name="name" value="' + escapeHtml(state.user.name) + '"></label>'
-            + '    <label class="field"><span>电话</span><input name="phone" value="' + escapeHtml(state.user.phone) + '"></label>'
-            + '    <label class="field"><span>性别</span><select name="gender">' + buildOptions(['男', '女'], state.user.gender) + '</select></label>'
-            + '    <label class="field"><span>学院</span><select name="college">' + buildCollegeOptions(state.user.college) + '</select></label>'
-            + '    <label class="field full-row"><span>类别</span><select name="category">' + buildOptions(['青年组', '老年组'], state.user.category) + '</select></label>'
-            + '    <div class="form-actions full-row"><button type="submit" class="primary-btn">保存修改</button></div>'
+            + '    <label class="field"><span>濮撳悕</span><input name="name" value="' + escapeHtml(state.user.name) + '" placeholder="璇疯緭鍏ュ鍚?></label>'
+            + '    <label class="field"><span>鑱旂郴鐢佃瘽</span><input name="phone" value="' + escapeHtml(state.user.phone) + '" placeholder="璇疯緭鍏ョ數璇?></label>'
+            + '    <label class="field"><span>Gender</span><input name="gender" value="' + escapeHtml(state.user.gender) + '" placeholder="gender"></label>'
+            + '    <label class="field"><span>???</span><input name="college" value="' + escapeHtml(state.user.college) + '" placeholder="????????></label>'
+            + '    <label class="field"><span>???</span><input name="className" value="' + escapeHtml(state.user.className) + '" placeholder="????????></label>'
+            + '    <label class="field"><span>???</span><input name="studentNo" value="' + escapeHtml(state.user.studentNo) + '" placeholder="????????></label>'
+            + '    <label class="field full-row"><span>???</span><input name="category" value="' + escapeHtml(state.user.category) + '" placeholder="?????????????></label>'
+            + '    </label>'
+            + '    <label class="field"><span>瀛﹂櫌</span><input name="college" value="' + escapeHtml(state.user.college) + '" placeholder="璇疯緭鍏ュ闄?></label>'
+            + '    <label class="field"><span>鐝骇</span><input name="className" value="' + escapeHtml(state.user.className) + '" placeholder="璇疯緭鍏ョ彮绾?></label>'
+            + '    <label class="field"><span>瀛﹀彿</span><input name="studentNo" value="' + escapeHtml(state.user.studentNo) + '" placeholder="璇疯緭鍏ュ鍙?></label>'
+            + '    <label class="field full-row"><span>绫诲埆</span><input name="category" value="' + escapeHtml(state.user.category) + '" placeholder="渚嬪锛氬鐢熴€佹暀甯?></label>'
+            + '    <div class="form-actions full-row">'
+            + '      <button type="submit" class="primary-btn">淇濆瓨淇敼</button>'
+            + '    </div>'
             + '    <p id="profileMessage" class="form-message full-row"></p>'
             + '  </form>'
             + '</div>';
 
-        document.getElementById('profileForm').addEventListener('submit', function (event) {
+        bindProfileForm();
+    }
+
+    function bindProfileForm() {
+        var form = document.getElementById('profileForm');
+        var messageEl = document.getElementById('profileMessage');
+
+        if (!form) {
+            return;
+        }
+
+        form.addEventListener('submit', function (event) {
             event.preventDefault();
-            var formData = new FormData(event.target);
+            var formData = new FormData(form);
+            var payload = {
+                name: String(formData.get('name') || '').trim(),
+                phone: String(formData.get('phone') || '').trim(),
+                gender: String(formData.get('gender') || '').trim(),
+                college: String(formData.get('college') || '').trim(),
+                className: String(formData.get('className') || '').trim(),
+                studentNo: String(formData.get('studentNo') || '').trim(),
+                category: String(formData.get('category') || '').trim()
+            };
+
             appUtils.ajax({
                 method: 'PUT',
                 url: '/api/users/me',
-                data: {
-                    name: String(formData.get('name') || '').trim(),
-                    phone: String(formData.get('phone') || '').trim(),
-                    gender: String(formData.get('gender') || ''),
-                    college: String(formData.get('college') || '').trim(),
-                    category: String(formData.get('category') || '')
-                },
+                data: payload,
                 success: function (response) {
-                    if (!response.success) {
-                        appUtils.showMessage(document.getElementById('profileMessage'), response.message || '保存失败', false);
+                    if (!response.success || !response.data) {
+                        appUtils.showMessage(messageEl, response.message || '淇敼澶辫触', false);
                         return;
                     }
+
                     state.user = response.data;
-                    currentUserName.textContent = state.user.name + (state.user.role === 'ADMIN' ? ' 管理员' : ' 老师');
+                    currentUserName.textContent = state.user.name + (state.user.role === 'ADMIN' ? ' 绠＄悊鍛? : ' 鐢ㄦ埛');
                     renderProfile();
-                    appUtils.showMessage(document.getElementById('profileMessage'), '个人信息已更新', true);
+                    appUtils.showMessage(document.getElementById('profileMessage'), 'Saved successfully', true);
                 },
                 error: function (xhr, response) {
-                    appUtils.showMessage(document.getElementById('profileMessage'), (response && response.message) || '保存失败', false);
+                    appUtils.showMessage(messageEl, (response && response.message) || '淇敼澶辫触', false);
                 }
             });
         });
@@ -173,20 +185,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderEventTable(list, isMine) {
         if (!list.length) {
-            return '<div class="empty-state"><h3>暂无数据</h3><p>' + (isMine ? '你还没有报名任何项目。' : '当前暂无可报名项目。') + '</p></div>';
+            mainView.innerHTML = '<div class="empty-state"><h3>鏆傛棤鏁版嵁</h3><p>' + (isMine ? '褰撳墠杩樻病鏈夋姤鍚嶈褰曘€? : '褰撳墠娌℃湁鍙睍绀洪」鐩€?) + '</p></div>';
+            return;
         }
-        var currentPage = isMine ? state.myEventPage : state.eventPage;
-        var totalPages = getTotalPages(list);
-        var paginatedList = getPaginatedList(list, currentPage);
-        
-        var html = ''
+
+        mainView.innerHTML = ''
             + '<table class="event-table">'
-            + '  <thead><tr><th>项目名称</th><th>项目类别</th><th>比赛时间</th><th>比赛地点</th><th>报名情况</th><th>项目说明</th><th>操作</th></tr></thead>'
+            + '  <thead><tr><th>椤圭洰鍚嶇О</th><th>椤圭洰绫诲埆</th><th>姣旇禌鏃堕棿</th><th>姣旇禌鍦扮偣</th><th>鎶ュ悕鎯呭喌</th><th>椤圭洰璇存槑</th><th>鎿嶄綔</th></tr></thead>'
             + '  <tbody>'
-            + paginatedList.map(function (item) {
+            + list.map(function (item) {
                 var actionHtml = isMine
-                    ? '<button class="action-btn cancel-btn" data-id="' + item.id + '">取消报名</button>'
-                    : '<button class="action-btn register-btn" data-id="' + item.id + '" ' + (item.registered ? 'disabled' : '') + '>' + (item.registered ? '已报名' : '报名') + '</button>';
+                    ? '<button class="action-btn cancel-btn" data-id="' + item.id + '">鍙栨秷鎶ュ悕</button>'
+                    : '<button class="action-btn register-btn" data-id="' + item.id + '" ' + (item.registered ? 'disabled' : '') + '>' + (item.registered ? '宸叉姤鍚? : '鎶ュ悕') + '</button>';
                 return ''
                     + '<tr>'
                     + '<td>' + escapeHtml(item.eventName) + '</td>'
@@ -200,87 +210,163 @@ document.addEventListener('DOMContentLoaded', function () {
             }).join('')
             + '  </tbody>'
             + '</table>';
-        
-        html += renderPagination(totalPages, currentPage, isMine);
-        html += '<div class="page-info">第 ' + currentPage + ' 页 / 共 ' + totalPages + ' 页，共 ' + list.length + ' 条记录</div>';
-        return html;
+
+        bindEventButtons();
     }
 
-    function renderUserTable() {
+    function renderUserManage() {
         if (!state.adminUsers.length) {
-            return '<div class="empty-state"><h3>暂无用户</h3><p>当前系统还没有用户数据。</p></div>';
+            mainView.innerHTML = '<div class="empty-state"><h3>鏆傛棤鐢ㄦ埛</h3><p>褰撳墠绯荤粺杩樻病鏈夌敤鎴锋暟鎹€?/p></div>';
+            return;
         }
-        return ''
-            + '<table class="event-table">'
-            + '<thead><tr><th>姓名</th><th>账号</th><th>身份证号</th><th>电话</th><th>性别</th><th>学院</th><th>类别</th><th>角色</th><th>操作</th></tr></thead>'
-            + '<tbody>'
+
+        mainView.innerHTML = ''
+            + '<div class="section-block">'
+            + '  <div class="section-head"><div><h3>鏁版嵁姒傝</h3><p class="info-meta">鏌ョ湅褰撳墠绯荤粺鍐呯敤鎴锋€讳綋鎯呭喌銆?/p></div></div>'
+            + '  <div class="summary-grid">'
+            + '    <div class="summary-card"><strong>鐢ㄦ埛鎬绘暟</strong><p>' + state.adminUsers.length + '</p></div>'
+            + '    <div class="summary-card"><strong>绠＄悊鍛樻暟閲?/strong><p>' + state.adminUsers.filter(function (item) { return item.role === "ADMIN"; }).length + '</p></div>'
+            + '    <div class="summary-card"><strong>绂佺敤璐﹀彿鏁伴噺</strong><p>' + state.adminUsers.filter(function (item) { return item.status === "DISABLED"; }).length + '</p></div>'
+            + '  </div>'
+            + '</div>'
+            + '<div class="section-block">'
+            + '  <div class="section-head"><div><h3>鐢ㄦ埛鍒楄〃</h3><p class="info-meta">鏌ョ湅绯荤粺鍐呮墍鏈夌敤鎴蜂俊鎭€?/p></div></div>'
+            + '  <table class="event-table">'
+            + '    <thead><tr><th>濮撳悕</th><th>璐﹀彿</th><th>韬唤璇佸彿</th><th>鐢佃瘽</th><th>鎬у埆</th><th>瀛﹂櫌</th><th>绫诲埆</th><th>瑙掕壊</th><th>鐘舵€?/th><th>鎿嶄綔</th></tr></thead>'
+            + '    <tbody>'
             + state.adminUsers.map(function (item) {
-                return ''
-                    + '<tr>'
-                    + '<td>' + escapeHtml(item.name) + '</td>'
-                    + '<td>' + escapeHtml(item.username) + '</td>'
-                    + '<td>' + escapeHtml(item.idCard) + '</td>'
-                    + '<td>' + escapeHtml(item.phone) + '</td>'
-                    + '<td>' + escapeHtml(item.gender) + '</td>'
-                    + '<td>' + escapeHtml(item.college) + '</td>'
-                    + '<td>' + escapeHtml(item.category) + '</td>'
-                    + '<td>' + escapeHtml(item.role === 'ADMIN' ? '管理员' : '普通用户') + '</td>'
-                    + '<td>'
-                    + '<button class="action-btn reset-btn" data-id="' + item.id + '">重置密码</button> '
-                    + '<button class="action-btn delete-btn" data-id="' + item.id + '">删除账号</button>'
-                    + '</td>'
-                    + '</tr>';
-            }).join('')
-            + '</tbody></table>';
+                    var isAdmin = item.role === 'ADMIN';
+                    var statusText = item.status === 'DISABLED' ? '宸茬鐢? : '姝ｅ父';
+                    var statusAction = isAdmin
+                        ? ''
+                        : (item.status === 'DISABLED'
+                            ? '<button class="action-btn enable-user-btn" data-id="' + item.id + '">瑙ｉ櫎绂佺敤</button>'
+                            : '<button class="action-btn disable-user-btn" data-id="' + item.id + '">绂佺敤璐︽埛</button>');
+                    var deleteAction = isAdmin ? '' : '<button class="action-btn delete-user-btn" data-id="' + item.id + '">鍒犻櫎</button>';
+                    return ''
+                        + '<tr>'
+                        + '<td>' + escapeHtml(item.name) + '</td>'
+                        + '<td>' + escapeHtml(item.username) + '</td>'
+                        + '<td>' + escapeHtml(item.idCard) + '</td>'
+                        + '<td>' + escapeHtml(item.phone) + '</td>'
+                        + '<td>' + escapeHtml(item.gender) + '</td>'
+                        + '<td>' + escapeHtml(item.college) + '</td>'
+                        + '<td>' + escapeHtml(item.category) + '</td>'
+                        + '<td>' + escapeHtml(isAdmin ? '绠＄悊鍛? : '鏅€氱敤鎴?) + '</td>'
+                        + '<td>' + escapeHtml(statusText) + '</td>'
+                        + '<td><button class="action-btn reset-password-btn" data-id="' + item.id + '">閲嶇疆瀵嗙爜</button> ' + statusAction + ' ' + deleteAction + '</td>'
+                        + '</tr>';
+                }).join('')
+            + '    </tbody>'
+            + '  </table>'
+            + '</div>';
+
+        bindUserManageActions();
     }
 
-    function bindUserActions() {
-        // 绑定重置密码按钮事件
-        Array.prototype.slice.call(document.querySelectorAll('.reset-btn')).forEach(function (button) {
-            button.addEventListener('click', function () {
-                var userId = button.getAttribute('data-id');
-                if (confirm('确定要重置该用户的密码吗？重置后密码将变为默认值。')) {
-                    appUtils.ajax({
-                        method: 'POST',
-                        url: '/api/admin/users/' + userId + '/reset-password',
-                        success: function (response) {
-                            if (response.success) {
-                                alert('密码重置成功！');
-                            } else {
-                                alert('密码重置失败：' + (response.message || '未知错误'));
-                            }
-                        },
-                        error: function (xhr, response) {
-                            alert('密码重置失败：' + (response && response.message) || '网络异常');
-                        }
-                    });
-                }
-            });
-        });
+    function renderAthleteManage() {
+        if (!state.adminRegistrations.length) {
+            mainView.innerHTML = '<div class="empty-state"><h3>鏆傛棤鎶ュ悕璁板綍</h3><p>褰撳墠杩樻病鏈夊弬璧涜繍鍔ㄥ憳鏁版嵁銆?/p></div>';
+            return;
+        }
 
-        // 绑定删除账号按钮事件
-        Array.prototype.slice.call(document.querySelectorAll('.delete-btn')).forEach(function (button) {
-            button.addEventListener('click', function () {
-                var userId = button.getAttribute('data-id');
-                if (confirm('确定要删除该账号吗？此操作不可恢复。')) {
-                    appUtils.ajax({
-                        method: 'DELETE',
-                        url: '/api/admin/users/' + userId,
-                        success: function (response) {
-                            if (response.success) {
-                                alert('账号删除成功！');
-                                loadAdminData();
-                            } else {
-                                alert('账号删除失败：' + (response.message || '未知错误'));
-                            }
-                        },
-                        error: function (xhr, response) {
-                            alert('账号删除失败：' + (response && response.message) || '网络异常');
-                        }
-                    });
-                }
-            });
-        });
+        mainView.innerHTML = ''
+            + '<div class="section-block">'
+            + '  <div class="section-head"><div><h3>鏁版嵁姒傝</h3><p class="info-meta">鏌ョ湅褰撳墠鍙傝禌杩愬姩鍛樼殑鎬讳綋缁熻銆?/p></div></div>'
+            + '  <div class="summary-grid">'
+            + '    <div class="summary-card"><strong>鎶ュ悕璁板綍鎬绘暟</strong><p>' + state.adminRegistrations.length + '</p></div>'
+            + '    <div class="summary-card"><strong>宸叉姤鍚嶇姸鎬?/strong><p>' + state.adminRegistrations.filter(function (item) { return item.status === "宸叉姤鍚?; }).length + '</p></div>'
+            + '    <div class="summary-card"><strong>瑕嗙洊椤圭洰鏁?/strong><p>' + uniqueEventCount() + '</p></div>'
+            + '  </div>'
+            + '</div>'
+            + '<div class="section-block">'
+            + '  <div class="section-head"><div><h3>鍙傝禌鍚嶅崟</h3><p class="info-meta">鏌ョ湅鎵€鏈夊凡鎶ュ悕杩愬姩鍛樺拰椤圭洰鏄庣粏銆?/p></div></div>'
+            + '  <table class="event-table">'
+            + '    <thead><tr><th>濮撳悕</th><th>璐﹀彿</th><th>鐢佃瘽</th><th>瀛﹂櫌</th><th>绫诲埆</th><th>椤圭洰鍚嶇О</th><th>椤圭洰绫诲埆</th><th>鏃堕棿鍦扮偣</th><th>鐘舵€?/th><th>鎶ュ悕鏃堕棿</th></tr></thead>'
+            + '    <tbody>'
+            + state.adminRegistrations.map(function (item) {
+                    return ''
+                        + '<tr>'
+                        + '<td>' + escapeHtml(item.studentName) + '</td>'
+                        + '<td>' + escapeHtml(item.username) + '</td>'
+                        + '<td>' + escapeHtml(item.phone) + '</td>'
+                        + '<td>' + escapeHtml(item.college) + '</td>'
+                        + '<td>' + escapeHtml(item.category) + '</td>'
+                        + '<td>' + escapeHtml(item.eventName) + '</td>'
+                        + '<td>' + escapeHtml(item.eventCategory) + '</td>'
+                        + '<td>' + escapeHtml(item.eventTime + ' / ' + item.location) + '</td>'
+                        + '<td>' + escapeHtml(item.status) + '</td>'
+                        + '<td>' + escapeHtml(item.createdAt) + '</td>'
+                        + '</tr>';
+                }).join('')
+            + '    </tbody>'
+            + '  </table>'
+            + '</div>';
+    }
+
+    function renderEventManage() {
+        var formTitle = state.editingEventId ? '缂栬緫椤圭洰' : '鏂板椤圭洰';
+        var editingItem = state.adminEvents.find(function (item) {
+            return item.id === state.editingEventId;
+        }) || {
+            eventName: '',
+            eventCategory: '',
+            location: '',
+            quota: '',
+            description: '',
+            eventTime: ''
+        };
+
+        mainView.innerHTML = ''
+            + '<div class="section-block">'
+            + '  <div class="section-head"><div><h3>' + formTitle + '</h3><p class="info-meta">鍙湪杩欓噷缁存姢姣旇禌椤圭洰鐨勫熀纭€淇℃伅銆?/p></div></div>'
+            + '  <form id="eventForm" class="form-grid two-columns">'
+            + '    <label class="field"><span>椤圭洰鍚嶇О</span><input name="eventName" value="' + escapeHtml(editingItem.eventName) + '" placeholder="渚嬪锛氱敺瀛?00绫?></label>'
+            + '    <label class="field"><span>椤圭洰鍒嗙被</span><input name="eventCategory" value="' + escapeHtml(editingItem.eventCategory) + '" placeholder="渚嬪锛氱敯寰勭煭璺?></label>'
+            + '    <label class="field"><span>姣旇禌鍦扮偣</span><input name="location" value="' + escapeHtml(editingItem.location) + '" placeholder="渚嬪锛氫笢鎿嶅満A鍖?></label>'
+            + '    <label class="field"><span>浜烘暟涓婇檺</span><input name="quota" type="number" min="1" value="' + escapeHtml(editingItem.quota) + '" placeholder="璇疯緭鍏ヤ汉鏁颁笂闄?></label>'
+            + '    <label class="field full-row"><span>姣旇禌鏃堕棿</span><input name="eventTime" value="' + escapeHtml(editingItem.eventTime) + '" placeholder="渚嬪锛?026-05-20 08:30"></label>'
+            + '    <label class="field full-row"><span>椤圭洰璇存槑</span><input name="description" value="' + escapeHtml(editingItem.description) + '" placeholder="璇疯緭鍏ラ」鐩鏄?></label>'
+            + '    <div class="form-actions full-row">'
+            + '      <button type="submit" class="primary-btn">' + (state.editingEventId ? '淇濆瓨淇敼' : '鏂板椤圭洰') + '</button>'
+            + '      <button type="button" class="ghost-btn" id="resetEventForm">娓呯┖琛ㄥ崟</button>'
+            + '    </div>'
+            + '    <p id="eventFormMessage" class="form-message full-row"></p>'
+            + '  </form>'
+            + '</div>'
+            + '<div class="section-block">'
+            + '  <div class="section-head"><div><h3>椤圭洰鍒楄〃</h3><p class="info-meta">褰撳墠绯荤粺鍐呯殑鍏ㄩ儴姣旇禌椤圭洰銆?/p></div></div>'
+            + (state.adminEvents.length ? ''
+                + '<table class="event-table">'
+                + '  <thead><tr><th>椤圭洰鍚嶇О</th><th>椤圭洰鍒嗙被</th><th>姣旇禌鏃堕棿</th><th>姣旇禌鍦扮偣</th><th>浜烘暟涓婇檺</th><th>宸叉姤鍚?/th><th>椤圭洰璇存槑</th><th>鎿嶄綔</th></tr></thead>'
+                + '  <tbody>'
+                + state.adminEvents.map(function (item) {
+                    return ''
+                        + '<tr>'
+                        + '<td>' + escapeHtml(item.eventName) + '</td>'
+                        + '<td>' + escapeHtml(item.eventCategory) + '</td>'
+                        + '<td>' + escapeHtml(item.eventTime) + '</td>'
+                        + '<td>' + escapeHtml(item.location) + '</td>'
+                        + '<td>' + escapeHtml(item.quota) + '</td>'
+                        + '<td>' + escapeHtml(item.registeredCount || 0) + '</td>'
+                        + '<td>' + escapeHtml(item.description) + '</td>'
+                        + '<td><button class="action-btn edit-event-btn" data-id="' + item.id + '">缂栬緫</button> <button class="action-btn delete-event-btn" data-id="' + item.id + '">鍒犻櫎</button></td>'
+                        + '</tr>';
+                }).join('')
+                + '  </tbody>'
+                + '</table>'
+                : '<div class="empty-state"><h3>鏆傛棤椤圭洰</h3><p>褰撳墠杩樻病鏈夋瘮璧涢」鐩紝璇峰厛鏂板椤圭洰銆?/p></div>')
+            + '</div>';
+
+        bindEventManageActions();
+    }
+
+    function renderPlaceholder(title, text) {
+        mainView.innerHTML = ''
+            + '<div class="empty-state">'
+            + '  <h3>' + title + '</h3>'
+            + '  <p>' + text + '</p>'
+            + '</div>';
     }
 
     function uniqueEventCount() {
@@ -291,46 +377,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return Object.keys(map).length;
     }
 
-    function renderRegistrationTable() {
-        var paginatedRegistrations = getPaginatedList(state.adminRegistrations, state.registrationsPage);
-        if (!paginatedRegistrations.length) {
-            return '<div class="empty-state"><h3>暂无报名记录</h3><p>目前还没有用户完成项目报名。</p></div>';
-        }
-        return ''
-            + '<table class="event-table">'
-            + '<thead><tr><th>姓名</th><th>账号</th><th>电话</th><th>学院</th><th>类别</th><th>项目名称</th><th>项目类别</th><th>时间地点</th><th>状态</th><th>报名时间</th></tr></thead>'
-            + '<tbody>'
-            + paginatedRegistrations.map(function (item) {
-                return ''
-                    + '<tr>'
-                    + '<td>' + escapeHtml(item.studentName) + '</td>'
-                    + '<td>' + escapeHtml(item.username) + '</td>'
-                    + '<td>' + escapeHtml(item.phone) + '</td>'
-                    + '<td>' + escapeHtml(item.college) + '</td>'
-                    + '<td>' + escapeHtml(item.category) + '</td>'
-                    + '<td>' + escapeHtml(item.eventName) + '</td>'
-                    + '<td>' + escapeHtml(item.eventCategory) + '</td>'
-                    + '<td>' + escapeHtml(item.eventTime + ' / ' + item.location) + '</td>'
-                    + '<td>' + escapeHtml(item.status) + '</td>'
-                    + '<td>' + escapeHtml(item.createdAt) + '</td>'
-                    + '</tr>';
-            }).join('')
-            + '</tbody></table>';
-    }
-
-    function renderAdminContent() {
-        adminView.innerHTML = ''
-            + '<div class="summary-grid">'
-            + '  <div class="summary-card"><strong>用户总数</strong><p>' + state.adminUsers.length + '</p></div>'
-            + '  <div class="summary-card"><strong>管理员数量</strong><p>' + state.adminUsers.filter(function (item) { return item.role === "ADMIN"; }).length + '</p></div>'
-            + '  <div class="summary-card"><strong>普通用户数量</strong><p>' + state.adminUsers.filter(function (item) { return item.role !== "ADMIN"; }).length + '</p></div>'
-            + '</div>'
-            + renderUserTable();
-        bindUserActions();
-    }
-
-    function bindRegisterButtons() {
-        // 绑定报名按钮事件
+    function bindEventButtons() {
         Array.prototype.slice.call(document.querySelectorAll('.register-btn')).forEach(function (button) {
             button.addEventListener('click', function () {
                 appUtils.ajax({
@@ -338,142 +385,194 @@ document.addEventListener('DOMContentLoaded', function () {
                     url: '/api/events/' + button.getAttribute('data-id') + '/register',
                     success: function (response) {
                         if (!response.success) {
-                            window.alert(response.message || '报名失败');
+                            window.alert(response.message || '鎶ュ悕澶辫触');
                             return;
                         }
-                        window.alert('报名成功');
+                        window.alert('鎶ュ悕鎴愬姛');
                         loadEventData();
                     },
                     error: function (xhr, response) {
-                        window.alert((response && response.message) || '报名失败');
+                        window.alert((response && response.message) || '鎶ュ悕澶辫触');
                     }
                 });
             });
         });
 
-        // 绑定取消报名按钮事件
         Array.prototype.slice.call(document.querySelectorAll('.cancel-btn')).forEach(function (button) {
             button.addEventListener('click', function () {
-                if (confirm('确定要取消报名吗？')) {
-                    appUtils.ajax({
-                        method: 'DELETE',
-                        url: '/api/events/' + button.getAttribute('data-id') + '/register',
-                        success: function (response) {
-                            if (!response.success) {
-                                window.alert(response.message || '取消报名失败');
-                                return;
-                            }
-                            window.alert('取消报名成功');
-                            loadEventData();
-                        },
-                        error: function (xhr, response) {
-                            window.alert((response && response.message) || '取消报名失败');
+                appUtils.ajax({
+                    method: 'DELETE',
+                    url: '/api/events/' + button.getAttribute('data-id') + '/register',
+                    success: function (response) {
+                        if (!response.success) {
+                            window.alert(response.message || '鍙栨秷鎶ュ悕澶辫触');
+                            return;
                         }
-                    });
-                }
+                        window.alert('鍙栨秷鎶ュ悕鎴愬姛');
+                        loadEventData();
+                    },
+                    error: function (xhr, response) {
+                        window.alert((response && response.message) || '鍙栨秷鎶ュ悕澶辫触');
+                    }
+                });
             });
         });
     }
 
-    function bindPaginationButtons(type) {
-        var totalPages, currentPage;
-        if (type === 'registrations') {
-            totalPages = getTotalPages(state.adminRegistrations);
-            currentPage = state.registrationsPage;
-        } else {
-            var isMine = type === 'mine';
-            totalPages = getTotalPages(isMine ? state.myEvents : state.events);
-            currentPage = isMine ? state.myEventPage : state.eventPage;
-        }
-        
-        Array.prototype.slice.call(document.querySelectorAll('.pagination .page-btn')).forEach(function (button) {
+    function bindUserManageActions() {
+        Array.prototype.slice.call(document.querySelectorAll('.reset-password-btn')).forEach(function (button) {
             button.addEventListener('click', function () {
-                var page = button.getAttribute('data-page');
-                
-                if (page === 'prev') {
-                    currentPage = Math.max(1, currentPage - 1);
-                } else if (page === 'next') {
-                    currentPage = Math.min(totalPages, currentPage + 1);
-                } else {
-                    currentPage = parseInt(page, 10);
-                }
-                
-                if (type === 'registrations') {
-                    state.registrationsPage = currentPage;
-                    var totalPages = getTotalPages(state.adminRegistrations);
-                    registrationsView.innerHTML = ''
-                        + '<div class="summary-grid">'
-                        + '  <div class="summary-card"><strong>报名记录总数</strong><p>' + state.adminRegistrations.length + '</p></div>'
-                        + '  <div class="summary-card"><strong>已报名状态</strong><p>' + state.adminRegistrations.filter(function (item) { return item.status === "已报名"; }).length + '</p></div>'
-                        + '  <div class="summary-card"><strong>覆盖项目数</strong><p>' + uniqueEventCount() + '</p></div>'
-                        + '</div>'
-                        + renderRegistrationTable()
-                        + renderPagination(totalPages, state.registrationsPage, 'registrations');
-                    bindPaginationButtons('registrations');
-                } else {
-                    var isMine = type === 'mine';
-                    if (isMine) {
-                        state.myEventPage = currentPage;
-                    } else {
-                        state.eventPage = currentPage;
+                var id = button.getAttribute('data-id');
+                appUtils.ajax({
+                    method: 'POST',
+                    url: '/api/admin/users/' + id + '/reset-password',
+                    success: function (response) {
+                        if (!response.success) {
+                            window.alert(response.message || '閲嶇疆瀵嗙爜澶辫触');
+                            return;
+                        }
+                        window.alert('瀵嗙爜宸查噸缃负 123456');
+                    },
+                    error: function (xhr, response) {
+                        window.alert((response && response.message) || '閲嶇疆瀵嗙爜澶辫触');
                     }
-                    
-                    eventsView.innerHTML = renderEventTable(isMine ? state.myEvents : state.events, isMine);
-                    bindRegisterButtons();
-                    bindPaginationButtons(type);
+                });
+            });
+        });
+
+        Array.prototype.slice.call(document.querySelectorAll('.disable-user-btn')).forEach(function (button) {
+            button.addEventListener('click', function () {
+                var id = button.getAttribute('data-id');
+                appUtils.ajax({
+                    method: 'POST',
+                    url: '/api/admin/users/' + id + '/disable',
+                    success: function (response) {
+                        if (!response.success) {
+                            window.alert(response.message || '绂佺敤璐︽埛澶辫触');
+                            return;
+                        }
+                        loadAdminData();
+                    },
+                    error: function (xhr, response) {
+                        window.alert((response && response.message) || '绂佺敤璐︽埛澶辫触');
+                    }
+                });
+            });
+        });
+
+        Array.prototype.slice.call(document.querySelectorAll('.enable-user-btn')).forEach(function (button) {
+            button.addEventListener('click', function () {
+                var id = button.getAttribute('data-id');
+                appUtils.ajax({
+                    method: 'POST',
+                    url: '/api/admin/users/' + id + '/enable',
+                    success: function (response) {
+                        if (!response.success) {
+                            window.alert(response.message || '瑙ｉ櫎绂佺敤澶辫触');
+                            return;
+                        }
+                        loadAdminData();
+                    },
+                    error: function (xhr, response) {
+                        window.alert((response && response.message) || '瑙ｉ櫎绂佺敤澶辫触');
+                    }
+                });
+            });
+        });
+
+        Array.prototype.slice.call(document.querySelectorAll('.delete-user-btn')).forEach(function (button) {
+            button.addEventListener('click', function () {
+                var id = button.getAttribute('data-id');
+                if (!window.confirm('纭畾瑕佸垹闄よ繖涓处鍙峰悧锛?)) {
+                    return;
                 }
+                appUtils.ajax({
+                    method: 'DELETE',
+                    url: '/api/admin/users/' + id,
+                    success: function (response) {
+                        if (!response.success) {
+                            window.alert(response.message || '鍒犻櫎鐢ㄦ埛澶辫触');
+                            return;
+                        }
+                        loadAdminData();
+                    },
+                    error: function (xhr, response) {
+                        window.alert((response && response.message) || '鍒犻櫎鐢ㄦ埛澶辫触');
+                    }
+                });
             });
         });
     }
 
     function renderCurrentView() {
-        profileView.classList.toggle('hidden', state.currentView !== 'profile');
-        eventsView.classList.toggle('hidden', state.currentView !== 'events');
-        adminView.classList.toggle('hidden', state.currentView !== 'admin');
-        registrationsView.classList.toggle('hidden', state.currentView !== 'registrations');
+        var currentMenu = getMenus().find(function (item) {
+            return item.key === state.currentView;
+        });
+
+        if (currentMenu) {
+            sectionTitle.textContent = currentMenu.label;
+            sectionDesc.textContent = currentMenu.desc;
+        }
+
+        renderTabs();
 
         if (state.currentView === 'profile') {
-            sectionTitle.textContent = '个人信息';
-            sectionDesc.textContent = '查看并维护当前登录人员的基础资料。';
-            renderTabs();
             renderProfile();
             return;
         }
 
         if (state.currentView === 'events') {
-            sectionTitle.textContent = '运动会报名';
-            sectionDesc.textContent = '浏览所有项目并完成报名，也可以查看自己的报名信息。';
-            renderTabs();
-            eventsView.innerHTML = renderEventTable(state.currentTab === 'mine' ? state.myEvents : state.events, state.currentTab === 'mine');
-            bindRegisterButtons();
-            bindPaginationButtons(state.currentTab === 'mine' ? 'mine' : 'all');
+            renderEventTable(state.currentTab === 'mine' ? state.myEvents : state.events, state.currentTab === 'mine');
             return;
         }
 
-        if (state.currentView === 'admin') {
-            sectionTitle.textContent = '管理员后台';
-            sectionDesc.textContent = '查看系统内所有用户资料。';
-            renderTabs();
-            renderAdminContent();
+        if (state.currentView === 'user-manage') {
+            renderUserManage();
             return;
         }
 
-        if (state.currentView === 'registrations') {
-            sectionTitle.textContent = '报名总览';
-            sectionDesc.textContent = '查看所有用户的报名记录。';
-            subTabs.classList.add('hidden');
-            var totalPages = getTotalPages(state.adminRegistrations);
-            registrationsView.innerHTML = ''
-                + '<div class="summary-grid">'
-                + '  <div class="summary-card"><strong>报名记录总数</strong><p>' + state.adminRegistrations.length + '</p></div>'
-                + '  <div class="summary-card"><strong>已报名状态</strong><p>' + state.adminRegistrations.filter(function (item) { return item.status === "已报名"; }).length + '</p></div>'
-                + '  <div class="summary-card"><strong>覆盖项目数</strong><p>' + uniqueEventCount() + '</p></div>'
-                + '</div>'
-                + renderRegistrationTable()
-                + renderPagination(totalPages, state.registrationsPage, 'registrations');
-            bindPaginationButtons('registrations');
+        if (state.currentView === 'athlete-manage') {
+            renderAthleteManage();
             return;
         }
+
+        if (state.currentView === 'admin-home') {
+            renderPlaceholder('杩愬姩浼氱鐞?, '杩欓噷灏嗕綔涓虹鐞嗗憳鍚庡彴棣栭〉锛屽彲灞曠ず鎶ュ悕鎬昏銆佺郴缁熷叕鍛娿€佽繍鍔ㄤ細绠＄悊鍏ュ彛绛夊唴瀹广€?);
+            return;
+        }
+
+        if (state.currentView === 'team-info') {
+            renderPlaceholder('鍥綋淇℃伅绠＄悊', '杩欓噷灏嗙户缁ˉ鍏呭闄€侀儴闂ㄣ€佷唬琛ㄩ槦绛夊洟浣撲俊鎭鐞嗗姛鑳姐€?);
+            return;
+        }
+
+        if (state.currentView === 'event-manage') {
+            renderEventManage();
+            return;
+        }
+
+        if (state.currentView === 'score-manage') {
+            renderPlaceholder('鍙傝禌鎴愮哗绠＄悊', '杩欓噷灏嗙户缁ˉ鍏呮垚缁╁綍鍏ャ€佹垚缁╃淮鎶ゃ€佹垚缁╂煡璇㈢瓑鍔熻兘銆?);
+            return;
+        }
+
+        if (state.currentView === 'record-manage') {
+            renderPlaceholder('椤圭洰璁板綍绠＄悊', '杩欓噷灏嗙户缁ˉ鍏呴」鐩褰曘€佽禌浜嬬З搴忓唽鍜岄」鐩。妗堢鐞嗗姛鑳姐€?);
+            return;
+        }
+
+        if (state.currentView === 'system-manage') {
+            renderPlaceholder('绯荤粺绠＄悊', '杩欓噷灏嗙户缁ˉ鍏呯郴缁熼厤缃€佽处鍙锋潈闄愬拰杩愯缁存姢鍔熻兘銆?);
+        }
+    }
+
+    function switchView(view) {
+        state.currentView = view;
+        if (view === 'events' && state.currentTab !== 'mine') {
+            state.currentTab = 'all';
+        }
+        renderSidebar();
+        renderCurrentView();
     }
 
     function loadEventData() {
@@ -487,6 +586,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         });
+
         appUtils.ajax({
             method: 'GET',
             url: '/api/events/my',
@@ -503,6 +603,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!state.user || state.user.role !== 'ADMIN') {
             return;
         }
+
         appUtils.ajax({
             method: 'GET',
             url: '/api/admin/users',
@@ -513,6 +614,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         });
+
         appUtils.ajax({
             method: 'GET',
             url: '/api/admin/registrations',
@@ -523,17 +625,97 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         });
+
+        appUtils.ajax({
+            method: 'GET',
+            url: '/api/admin/events',
+            success: function (response) {
+                if (response.success) {
+                    state.adminEvents = response.data || [];
+                    renderCurrentView();
+                }
+            }
+        });
     }
 
-    function switchView(view) {
-        state.currentView = view;
-        if (view === 'events') {
-            state.currentTab = state.currentTab === 'mine' ? 'mine' : 'all';
+    function bindEventManageActions() {
+        var form = document.getElementById('eventForm');
+        var resetButton = document.getElementById('resetEventForm');
+        var messageEl = document.getElementById('eventFormMessage');
+
+        if (form) {
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+                var formData = new FormData(form);
+                var payload = {
+                    eventName: String(formData.get('eventName') || '').trim(),
+                    eventCategory: String(formData.get('eventCategory') || '').trim(),
+                    location: String(formData.get('location') || '').trim(),
+                    quota: Number(formData.get('quota') || 0),
+                    description: String(formData.get('description') || '').trim(),
+                    eventTime: String(formData.get('eventTime') || '').trim()
+                };
+                var successText = state.editingEventId ? '椤圭洰淇敼鎴愬姛' : '椤圭洰鏂板鎴愬姛';
+
+                appUtils.ajax({
+                    method: state.editingEventId ? 'PUT' : 'POST',
+                    url: state.editingEventId ? '/api/admin/events/' + state.editingEventId : '/api/admin/events',
+                    data: payload,
+                    success: function (response) {
+                        if (!response.success) {
+                            appUtils.showMessage(messageEl, response.message || '淇濆瓨澶辫触', false);
+                            return;
+                        }
+                        state.editingEventId = null;
+                        window.alert(successText);
+                        loadAdminData();
+                    },
+                    error: function (xhr, response) {
+                        appUtils.showMessage(messageEl, (response && response.message) || '淇濆瓨澶辫触', false);
+                    }
+                });
+            });
         }
-        navItems.forEach(function (item) {
-            item.classList.toggle('active', item.getAttribute('data-view') === view);
+
+        if (resetButton) {
+            resetButton.addEventListener('click', function () {
+                state.editingEventId = null;
+                renderCurrentView();
+            });
+        }
+
+        Array.prototype.slice.call(document.querySelectorAll('.edit-event-btn')).forEach(function (button) {
+            button.addEventListener('click', function () {
+                state.editingEventId = Number(button.getAttribute('data-id'));
+                renderCurrentView();
+            });
         });
-        renderCurrentView();
+
+        Array.prototype.slice.call(document.querySelectorAll('.delete-event-btn')).forEach(function (button) {
+            button.addEventListener('click', function () {
+                var eventId = button.getAttribute('data-id');
+                if (!window.confirm('纭畾瑕佸垹闄よ繖涓」鐩悧锛熷垹闄ゅ悗璇ラ」鐩殑鎶ュ悕璁板綍涔熶細涓€骞舵竻闄ゃ€?)) {
+                    return;
+                }
+                appUtils.ajax({
+                    method: 'DELETE',
+                    url: '/api/admin/events/' + eventId,
+                    success: function (response) {
+                        if (!response.success) {
+                            window.alert(response.message || '鍒犻櫎澶辫触');
+                            return;
+                        }
+                        if (state.editingEventId === Number(eventId)) {
+                            state.editingEventId = null;
+                        }
+                        loadAdminData();
+                    },
+                    error: function (xhr, response) {
+                        window.alert((response && response.message) || '鍒犻櫎澶辫触');
+                    }
+                });
+            });
+        });
     }
 
     function loadCurrentUser() {
@@ -545,18 +727,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     window.location.href = './login.html';
                     return;
                 }
+
                 state.user = response.data;
-                currentUserName.textContent = state.user.name + (state.user.role === 'ADMIN' ? ' 管理员' : ' 同学');
-                if (state.user.role === 'ADMIN') {
-                    adminNavBtn.classList.remove('hidden');
-                    registrationsNavBtn.classList.remove('hidden');
-                    // 隐藏个人信息和运动会报名菜单
-                    document.querySelector('[data-view="profile"]').classList.add('hidden');
-                    document.querySelector('[data-view="events"]').classList.add('hidden');
-                    // 自动切换到管理员后台视图
-                    switchView('admin');
-                }
-                renderProfile();
+                currentUserName.textContent = state.user.name + (state.user.role === 'ADMIN' ? ' 绠＄悊鍛? : ' 鐢ㄦ埛');
+                state.currentView = state.user.role === 'ADMIN' ? 'admin-home' : 'profile';
+
+                renderSidebar();
+                renderCurrentView();
                 loadEventData();
                 loadAdminData();
             },
@@ -565,12 +742,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
-
-    navItems.forEach(function (item) {
-        item.addEventListener('click', function () {
-            switchView(item.getAttribute('data-view'));
-        });
-    });
 
     logoutBtn.addEventListener('click', function () {
         appUtils.ajax({
@@ -586,5 +757,4 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     loadCurrentUser();
-    switchView('profile');
 });
