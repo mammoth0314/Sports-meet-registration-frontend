@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>运动会报名系统 - 注册</title>
+    <link rel="stylesheet" href="./assets/css/style.css">
+</head>
+
+<body class="auth-page register-page">
+    <div class="auth-shell register-shell">
+        <section class="auth-panel wide-panel">
+            <div class="panel-head">
+                <h2>新用户注册</h2>
+                <p>请完整填写个人信息，注册成功后将自动登录。</p>
+            </div>
+            <form id="registerForm" class="form-grid two-columns">
+                <label class="field">
+                    <span>身份证号</span>
+                    <input type="text" name="idCard" placeholder="请输入身份证号">
+                </label>
+                <label class="field">
+                    <span>登录账号</span>
+                    <input type="text" name="username" placeholder="请输入登录账号">
+                </label>
+                <label class="field">
+                    <span>密码</span>
+                    <input type="password" name="password" placeholder="请输入密码">
+                </label>
+                <label class="field">
+                    <span>确认密码</span>
+                    <input type="password" name="confirmPassword" placeholder="请再次输入密码">
+                </label>
+                <label class="field">
+                    <span>姓名</span>
+                    <input type="text" name="name" placeholder="请输入姓名">
+                </label>
+                <label class="field">
+                    <span>电话</span>
+                    <input type="text" name="phone" placeholder="请输入联系电话">
+                </label>
+                <label class="field">
+                    <span>性别</span>
+                    <select name="gender">
+                        <option value="">请选择性别</option>
+                        <option value="男">男</option>
+                        <option value="女">女</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span>学院</span>
+                    <select name="college" required>
+                        <option value="">请选择学院</option>
+                        <option value="文学与文化传播学院">文学与文化传播学院</option>
+                        <option value="马克思主义学院">马克思主义学院</option>
+                        <option value="教育学院">教育学院</option>
+                        <option value="外国语学院">外国语学院</option>
+                        <option value="历史文化学院">历史文化学院</option>
+                        <option value="商学院">商学院</option>
+                        <option value="化学工程与技术学院">化学工程与技术学院</option>
+                        <option value="电子信息与电气工程学院">电子信息与电气工程学院</option>
+                        <option value="数学与统计学院">数学与统计学院</option>
+                        <option value="生物工程与技术学院">生物工程与技术学院</option>
+                        <option value="机电工程学院">机电工程学院</option>
+                        <option value="土木工程学院">土木工程学院</option>
+                        <option value="资源与环境工程学院">资源与环境工程学院</option>
+                        <option value="体育学院">体育学院</option>
+                        <option value="美术与设计学院">美术与设计学院</option>
+                        <option value="音乐舞蹈学院">音乐舞蹈学院</option>
+                        <option value="卫生健康学院">卫生健康学院</option>
+                        <option value="继续教育学院（培训中心）">继续教育学院（培训中心）</option>
+                    </select>
+                </label>
+                <label class="field full-row">
+                    <span>类别</span>
+                    <select name="category">
+                        <option value="">请选择类别</option>
+                        <option value="青年组">青年组</option>
+                        <option value="老年组">老年组</option>
+                    </select>
+                </label>
+                <div class="form-actions full-row">
+                    <button type="submit" class="primary-btn">提交注册</button>
+                    <button type="button" class="ghost-btn" id="backLogin">返回登录</button>
+                </div>
+                <p id="registerMessage" class="form-message full-row"></p>
+            </form>
+        </section>
+        <section class="register-side-card">
+            <div class="auth-badge">Join The Meet</div>
+            <h1>青春赛场，即刻出发</h1>
+            <p>注册后可在线报名项目、维护个人资料，并查看所有已报名赛事。</p>
+        </section>
+    </div>
+    <script src="./assets/js/common.js"></script>
+    <script src="./assets/js/register.js"></script>
+</body>
+
+</html>

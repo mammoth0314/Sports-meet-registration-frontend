@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>运动会报名系统</title>
+    <link rel="stylesheet" href="./assets/css/style.css">
+</head>
+
+<body class="app-body">
+    <div class="app-layout">
+        <header class="topbar">
+            <div>
+                <p class="topbar-tag">Sports Meet Workspace</p>
+                <h1>运动会报名系统</h1>
+            </div>
+            <div class="topbar-user">
+                <span id="currentUserName">加载中...</span>
+                <button type="button" class="ghost-btn small" id="logoutBtn">退出登录</button>
+            </div>
+        </header>
+
+        <main class="main-layout">
+            <aside class="sidebar">
+                <button class="nav-item active" data-view="profile">个人信息</button>
+                <button class="nav-item" data-view="events">运动会报名</button>
+                <button class="nav-item hidden" data-view="admin" id="adminNavBtn">管理员后台</button>
+                <button class="nav-item hidden" data-view="registrations" id="registrationsNavBtn">报名总览</button>
+            </aside>
+
+            <section class="content-area">
+                <div class="content-header">
+                    <div>
+                        <h2 id="sectionTitle">个人信息</h2>
+                        <p id="sectionDesc">查看并维护当前登录人员的基础资料。</p>
+                    </div>
+                    <div class="content-tabs hidden" id="subTabs"></div>
+                </div>
+                <section id="profileView" class="content-card"></section>
+                <section id="eventsView" class="content-card hidden"></section>
+                <section id="adminView" class="content-card hidden"></section>
+                <section id="registrationsView" class="content-card hidden"></section>
+            </section>
+        </main>
+    </div>
+    <script src="./assets/js/common.js"></script>
+    <script src="./assets/js/app.js"></script>
+</body>
+
+</html>

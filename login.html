@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>运动会报名系统 - 登录</title>
+    <link rel="stylesheet" href="./assets/css/style.css">
+</head>
+
+<body class="auth-page">
+    <div class="auth-shell login-shell">
+        <section class="auth-hero">
+            <div class="auth-badge">Campus Sports</div>
+            <h1>运动会报名系统</h1>
+            <p class="auth-subtitle">统一完成赛事报名、个人信息维护与报名记录查看，界面简洁，流程顺畅。</p>
+            <div class="notice-card">
+                <h2>报名须知</h2>
+                <ul>
+                    <li>请使用真实身份信息注册，身份证号在系统中唯一。</li>
+                    <li>报名成功后可在“报名信息”中查看已选项目。</li>
+                    <li>如项目名额已满，将无法继续报名该项目。</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="auth-panel">
+            <div class="panel-head">
+                <h2>账号登录</h2>
+                <p>请输入账号和密码进入系统。</p>
+            </div>
+            <form id="loginForm" class="form-grid single-column" autocomplete="off">
+                <label class="field">
+                    <span>登录账号</span>
+                    <input type="text" name="username" placeholder="请输入登录账号" autocomplete="off">
+                </label>
+                <label class="field">
+                    <span>登录密码</span>
+                    <input type="password" name="password" placeholder="请输入登录密码" autocomplete="off">
+                </label>
+                <div class="form-actions stacked">
+                    <button type="submit" class="primary-btn">登录</button>
+                    <button type="button" class="ghost-btn" id="goRegister">注册</button>
+                </div>
+                <p id="loginMessage" class="form-message"></p>
+            </form>
+        </section>
+    </div>
+    <script src="./assets/js/common.js"></script>
+    <script src="./assets/js/login.js"></script>
+</body>
+
+</html>
