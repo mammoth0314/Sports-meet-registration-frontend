@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function () {
+﻿document.addEventListener('DOMContentLoaded', function () {
     appUtils.redirectIfLoggedIn();
 
     var form = document.getElementById('registerForm');
@@ -18,16 +18,16 @@ document.addEventListener('DOMContentLoaded', function () {
             url: '/api/auth/register',
             data: {
                 idCard: String(formData.get('idCard') || '').trim(),
-                username: String(formData.get('username') || '').trim(),
+                email: String(formData.get('email') || '').trim(),
                 password: String(formData.get('password') || '').trim(),
                 confirmPassword: String(formData.get('confirmPassword') || '').trim(),
                 name: String(formData.get('name') || '').trim(),
                 phone: String(formData.get('phone') || '').trim(),
-                gender: String(formData.get('gender') || ''),
+                gender: String(formData.get('gender') || '').trim(),
                 college: String(formData.get('college') || '').trim(),
                 className: String(formData.get('className') || '').trim(),
                 studentNo: String(formData.get('studentNo') || '').trim(),
-                category: String(formData.get('category') || '')
+                category: String(formData.get('category') || '').trim()
             },
             success: function (response) {
                 if (!response.success) {
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }, 400);
             },
             error: function (xhr, response) {
-                appUtils.showMessage(message, (response && response.message) || '网络异常，请确认后端已启动', false);
+                appUtils.showMessage(message, (response && response.message) || '网络异常，请检查后端服务', false);
             }
         });
     });

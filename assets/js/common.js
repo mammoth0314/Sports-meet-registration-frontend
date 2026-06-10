@@ -1,9 +1,25 @@
 (function () {
-    function resolveApiBase() {
-        if (window.location.protocol === 'file:') {
-            return 'http://localhost:8080';
+    function normalizeBase(base) {
+        return String(base || '').replace(/\/+$/, '');
+    }
+
+    function normalizePath(path) {
+        var value = String(path || '').trim();
+        if (!value) {
+            return '';
         }
-        return window.location.protocol + '//' + window.location.hostname + ':8080';
+        return value.charAt(0) === '/' ? value : '/' + value;
+    }
+
+    function resolveApiBase() {
+        if (window.APP_CONFIG && window.APP_CONFIG.API_BASE) {
+            return normalizeBase(window.APP_CONFIG.API_BASE);
+        }
+        var protocol = window.location.protocol === 'file:' ? 'http:' : window.location.protocol;
+        var host = window.location.hostname || 'localhost';
+        var port = (window.APP_CONFIG && window.APP_CONFIG.API_PORT) || '8080';
+        var contextPath = normalizePath(window.APP_CONFIG && window.APP_CONFIG.API_CONTEXT_PATH);
+        return normalizeBase(protocol + '//' + host + ':' + port + contextPath);
     }
 
     var API_BASE = resolveApiBase();
@@ -19,7 +35,10 @@
         var xhr = new XMLHttpRequest();
         xhr.open(options.method || 'GET', buildUrl(options.url), true);
         xhr.withCredentials = true;
-        xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+        var isFormData = typeof FormData !== 'undefined' && options.data instanceof FormData;
+        if (!isFormData) {
+            xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+        }
         xhr.onreadystatechange = function () {
             var response;
             if (xhr.readyState !== 4) {
@@ -39,7 +58,7 @@
         xhr.onerror = function () {
             options.error && options.error(xhr, { success: false, message: '网络异常，请确认后端已启动' });
         };
-        xhr.send(options.data ? JSON.stringify(options.data) : null);
+        xhr.send(options.data ? (isFormData ? options.data : JSON.stringify(options.data)) : null);
     }
 
     function showMessage(element, message, isSuccess) {

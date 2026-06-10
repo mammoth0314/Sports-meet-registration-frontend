@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -11,7 +11,7 @@
         <section class="auth-panel wide-panel">
             <div class="panel-head">
                 <h2>新用户注册</h2>
-                <p>请完整填写个人信息，注册成功后将自动登录。</p>
+                <p>请完整填写个人信息，邮箱将用于登录，注册成功后可直接进入系统。</p>
             </div>
             <form id="registerForm" class="form-grid two-columns">
                 <label class="field">
@@ -19,8 +19,8 @@
                     <input type="text" name="idCard" placeholder="请输入身份证号">
                 </label>
                 <label class="field">
-                    <span>登录账号</span>
-                    <input type="text" name="username" placeholder="请输入登录账号">
+                    <span>邮箱</span>
+                    <input type="email" name="email" placeholder="请输入邮箱地址">
                 </label>
                 <label class="field">
                     <span>密码</span>
@@ -50,7 +50,7 @@
                     <span>学院</span>
                     <select name="college" required>
                         <option value="">请选择学院</option>
-                        <option value="文学与文化传播学院">文学与文化传播学院</option>
+                        <option value="文学院与文化传播学院">文学院与文化传播学院</option>
                         <option value="马克思主义学院">马克思主义学院</option>
                         <option value="教育学院">教育学院</option>
                         <option value="外国语学院">外国语学院</option>
@@ -99,6 +99,7 @@
             <p>注册后可在线报名项目、维护个人资料，并查看所有已报名赛事。</p>
         </section>
     </div>
+    <script src="./assets/js/config.js"></script>
     <script src="./assets/js/common.js"></script>
     <script src="./assets/js/register.js"></script>
 </body>
